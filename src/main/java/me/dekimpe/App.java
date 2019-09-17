@@ -60,7 +60,10 @@ public class App
                 .format("avro")
                 .load(GetStringArray(files)); //, stubPath + "stub-6.avsc"
         
-        Dataset<Row> result = hashtags.groupBy("col.")
+        Dataset<Row> result = hashtags.select(hashtags.col("hashtag"), explode(hashtags.col("hashtags"))).groupBy("col.hashtags").agg(count("*").as("NumberOfHashtags"));
+        result.show();
+        result = result.orderBy(result.col("NumberOfHashtags").desc()).cache();
+        result.show();
         
         /*Dataset<Row> joined = pagelinks.join(revisions, pagelinks.col("pl_id").equalTo(revisions.col("id")), "outer").where("pl_title = '" + subject + "' or title = '" + subject + "'").cache();
         Dataset<Row> exploded = joined.select(joined.col("pl_id"), explode(joined.col("revision"))).groupBy("col.contributor.username").agg(count("*").as("NumberOfRevisions"));
