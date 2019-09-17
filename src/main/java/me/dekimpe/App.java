@@ -54,7 +54,8 @@ public class App
         SparkSession spark = SparkSession.builder()
                 .appName("Spark Parsing XML - Session")
                 .master("spark://192.168.10.14:7077")
-                .config("spark.executor.memory", "4g")
+                .config("spark.executor.memory", "1g")
+                .config("packages", "org.apache.spark:spark-avro_2.11:2.4.3")
                 .getOrCreate();
         
         Dataset<Row> hashtags = spark.read()
