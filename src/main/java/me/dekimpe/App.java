@@ -59,11 +59,18 @@ public class App
         
         Dataset<Row> hashtags = spark.read()
                 .format("avro")
-                .load(GetStringArray(files)); //, stubPath + "stub-6.avsc"
+                .load(GetStringArray(files)).cache();
+        hashtags.printSchema();
+        hashtags.show();
         
-        Dataset<Row> result = hashtags.select(hashtags.col("hashtags"), explode(hashtags.col("hashtags"))).groupBy("col.hashtags").agg(count("*").as("NumberOfHashtags"));
-        result.show();
+        Dataset<Row> expanded = hashtags.withColumn("hashtag", explode(hashtags.col("hashtags"))).drop(hashtags.col("hashtags")).cache();
+        expanded.printSchema();
+        expanded.show();
+        
+        Dataset<Row> result = expanded.groupBy("hashtag").agg(count("*").as("NumberOfHashtags"));
+        
         result = result.orderBy(result.col("NumberOfHashtags").desc()).cache();
+        result.printSchema();
         result.show();
         
         /*Dataset<Row> joined = pagelinks.join(revisions, pagelinks.col("pl_id").equalTo(revisions.col("id")), "outer").where("pl_title = '" + subject + "' or title = '" + subject + "'").cache();
