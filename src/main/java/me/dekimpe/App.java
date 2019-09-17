@@ -61,7 +61,7 @@ public class App
                 .format("avro")
                 .load(GetStringArray(files)); //, stubPath + "stub-6.avsc"
         
-        Dataset<Row> result = hashtags.select(hashtags.col("hashtag"), explode(hashtags.col("hashtags"))).groupBy("col.hashtags").agg(count("*").as("NumberOfHashtags"));
+        Dataset<Row> result = hashtags.select(hashtags.col("hashtags"), explode(hashtags.col("hashtags"))).groupBy("col.hashtags").agg(count("*").as("NumberOfHashtags"));
         result.show();
         result = result.orderBy(result.col("NumberOfHashtags").desc()).cache();
         result.show();
