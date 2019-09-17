@@ -23,12 +23,6 @@ public class App
     public static void main( String[] args )
     {
         
-        SparkSession spark = SparkSession.builder()
-                .appName("Spark Parsing XML - Session")
-                .master("spark://192.168.10.14:7077")
-                .config("spark.executor.memory", "4g")
-                .getOrCreate();
-        
         // Important Variables
         final String hdfsHost = "hdfs://hdfs-namenode:9000";
         
@@ -56,6 +50,12 @@ public class App
         } catch (Exception e) {
             System.err.println(e);
         }
+        
+        SparkSession spark = SparkSession.builder()
+                .appName("Spark Parsing XML - Session")
+                .master("spark://192.168.10.14:7077")
+                .config("spark.executor.memory", "4g")
+                .getOrCreate();
         
         Dataset<Row> hashtags = spark.read()
                 .format("avro")
