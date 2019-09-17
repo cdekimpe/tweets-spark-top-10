@@ -44,6 +44,7 @@ public class App
             FileSystem fs = FileSystem.get(new URI(hdfsHost), conf);
             FileStatus[] fileStatus = fs.listStatus(new Path(hdfsHost + directory));
             for (FileStatus status : fileStatus) {
+                System.out.println(status.getPath().toString());
                 files.add(status.getPath().toString());
             }
         } catch (Exception e) {
