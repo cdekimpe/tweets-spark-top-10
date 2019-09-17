@@ -2,7 +2,6 @@ package me.dekimpe;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -55,47 +54,28 @@ public class App
                 .appName("Spark Parsing XML - Session")
                 .master("spark://192.168.10.14:7077")
                 .config("spark.executor.memory", "1g")
-                .config("packages", "org.apache.spark:spark-avro_2.11:2.4.3")
                 .getOrCreate();
         
         Dataset<Row> hashtags = spark.read()
                 .format("avro")
-                .load(GetStringArray(files)).cache();
-        hashtags.printSchema();
-        hashtags.show();
+                .load(GetStringArray(files));
         
-        Dataset<Row> expanded = hashtags.withColumn("hashtag", explode(hashtags.col("hashtags"))).drop(hashtags.col("hashtags")).cache();
-        expanded.printSchema();
-        expanded.show();
-        
-        Dataset<Row> result = expanded.groupBy("hashtag").agg(count("*").as("NumberOfHashtags"));
+        Dataset<Row> expanded = hashtags.withColumn("hashtag", explode(hashtags.col("hashtags"))).drop(hashtags.col("hashtags"));
+        Dataset<Row> result = expanded.groupBy("hashtag").agg(count("*").as("NumberOfHashtags")).cache();
         
         result = result.orderBy(result.col("NumberOfHashtags").desc()).cache();
-        result.printSchema();
-        result.show();
+        result.show(10);
         
-        /*Dataset<Row> joined = pagelinks.join(revisions, pagelinks.col("pl_id").equalTo(revisions.col("id")), "outer").where("pl_title = '" + subject + "' or title = '" + subject + "'").cache();
-        Dataset<Row> exploded = joined.select(joined.col("pl_id"), explode(joined.col("revision"))).groupBy("col.contributor.username").agg(count("*").as("NumberOfRevisions"));
-        Dataset<Row> result = exploded.orderBy(exploded.col("NumberOfRevisions").desc()).cache();
-        
-        
-        result.show();
-        result.write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/" + args[0] + ".csv");*/
+        String resultFilename = String.format("%04d", year) + "-" + String.format("%02d", month) + "-" + String.format("%02d", day) + "-" + String.format("%02d", hour);
+        result.write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets-" + resultFilename + ".csv");
     }
     
     public static String[] GetStringArray(ArrayList<String> arr) 
     { 
-  
-        // declaration and initialise String Array 
         String str[] = new String[arr.size()]; 
-  
-        // ArrayList to Array Conversion 
         for (int j = 0; j < arr.size(); j++) { 
-            
-            // Assign each value to String array 
             str[j] = arr.get(j); 
         } 
-  
         return str; 
     } 
 }
