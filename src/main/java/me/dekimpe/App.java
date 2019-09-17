@@ -23,6 +23,12 @@ public class App
     public static void main( String[] args )
     {
         
+        SparkSession spark = SparkSession.builder()
+                .appName("Spark Parsing XML - Session")
+                .master("spark://192.168.10.14:7077")
+                .config("spark.executor.memory", "4g")
+                .getOrCreate();
+        
         // Important Variables
         final String hdfsHost = "hdfs://hdfs-namenode:9000";
         
@@ -35,7 +41,7 @@ public class App
         int month = Integer.parseInt(args[1]);
         int day = Integer.parseInt(args[2]);
         int hour = Integer.parseInt(args[3]);
-        String directory = "/topics/tweet/year=" + year + "/month=" + month + "/day=" + day + "/hour=" + hour + "/";
+        String directory = "/topics/tweet/year=" + String.format("%04d", year) + "/month=" + String.format("%02d", month) + "/day=" + String.format("%02d", day) + "/hour=" + String.format("%02d", hour) + "/";
         
         // Get list of files from that period
         ArrayList<String> files = new ArrayList<>();
@@ -50,12 +56,6 @@ public class App
         } catch (Exception e) {
             System.err.println(e);
         }
-        
-        SparkSession spark = SparkSession.builder()
-                .appName("Spark Parsing XML - Session")
-                .master("spark://192.168.10.14:7077")
-                .config("spark.executor.memory", "4g")
-                .getOrCreate();
         
         Dataset<Row> hashtags = spark.read()
                 .format("avro")
