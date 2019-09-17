@@ -66,7 +66,7 @@ public class App
         result.show(10);
         
         String resultFilename = String.format("%04d", year) + "-" + String.format("%02d", month) + "-" + String.format("%02d", day) + "-" + String.format("%02d", hour);
-        result.limit(10).repartition(1).write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets-" + resultFilename + ".csv");
+        result.limit(10).write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets-" + resultFilename + ".csv");
     }
     
     public static String[] GetStringArray(ArrayList<String> arr) 
