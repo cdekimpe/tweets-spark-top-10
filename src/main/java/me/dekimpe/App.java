@@ -49,12 +49,19 @@ public class App
         // Get list of files from that period
         ArrayList<String> files = new ArrayList<>();
         try {
+            String fileName;
             Configuration conf = new Configuration();
             FileSystem fs = FileSystem.get(new URI(hdfsHost), conf);
             FileStatus[] fileStatus = fs.listStatus(new Path(hdfsHost + directory));
             for (FileStatus status : fileStatus) {
-                System.out.println(status.getPath().toString());
-                files.add(status.getPath().toString());
+                fileName = status.getPath().toString();
+                if(fileName.contains(".avro")) {
+                    files.add(status.getPath().toString());
+                }
+            }
+            if(files.size() == 0) {
+                System.err.println("No files in the directory. Check the date you provided : " + directory);
+                System.exit(2);
             }
         } catch (Exception e) {
             System.err.println(e);
