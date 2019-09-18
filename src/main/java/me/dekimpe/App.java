@@ -118,11 +118,11 @@ public class App
                 .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST3), ElasticSearch.PORT));
         
         BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
-                .filter(QueryBuilders.rangeQuery("timestam").lt(timestamp))
+                .filter(QueryBuilders.rangeQuery("timestamp").lt(timestamp))
                 .source("tweets-management")
                 .get();
         long deleted = response.getDeleted();
-        System.out.println(deleted);
+        System.out.println("ElasticSearch Delete By Query : #" + deleted + " entries deleted.");
         
     }
 }
