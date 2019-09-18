@@ -3,7 +3,6 @@ package me.dekimpe;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.Date;
 import java.util.Calendar;
 import java.util.ArrayList;
 import me.dekimpe.config.ElasticSearch;
@@ -108,6 +107,7 @@ public class App
     public static void deleteOlderResults(long timestamp) throws UnknownHostException {
         
         // Create a connection to ES cluster
+        System.setProperty("es.set.netty.runtime.available.processors", "false");
         Settings settings = Settings.builder()
                 .put("cluster.name", ElasticSearch.CLUSTER_NAME)
                 .put("client.transport.sniff", "true").build();
