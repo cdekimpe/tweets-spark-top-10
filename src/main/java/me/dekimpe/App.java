@@ -1,7 +1,11 @@
 package me.dekimpe;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.Date;
 import java.util.ArrayList;
+import me.dekimpe.config.ElasticSearch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
@@ -12,6 +16,13 @@ import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.explode;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.reindex.BulkByScrollResponse;
+import org.elasticsearch.index.reindex.DeleteByQueryAction;
+import org.elasticsearch.transport.client.PreBuiltTransportClient;
 
 /**
  * Hello world!
@@ -21,7 +32,6 @@ public class App
 {
     public static void main( String[] args )
     {
-        
         // Important Variables
         final String hdfsHost = "hdfs://hdfs-namenode:9000";
         
@@ -36,7 +46,12 @@ public class App
         int hour = Integer.parseInt(args[3]);
         String directory = "/topics/tweet/year=" + String.format("%04d", year) + "/month=" + String.format("%02d", month) + "/day=" + String.format("%02d", day) + "/hour=" + String.format("%02d", hour) + "/";
         
-        // Get list of files from that period
+        // Get timestamp to get the data to delete from ElasticSearch
+        Date date = new Date(year, month - 1, day, hour + 1, 0); // month representation 0 to 11 & get next hour.
+        long timestamp = date.getTime() / 1000; // milliseconds -> seconds
+        System.out.println(timestamp);
+        
+        /* Get list of files from that period
         ArrayList<String> files = new ArrayList<>();
         try {
             Configuration conf = new Configuration();
@@ -59,14 +74,15 @@ public class App
                 .format("avro")
                 .load(GetStringArray(files));
         
+        // Explode Dataset into multiple lines for each hashtags find 
         Dataset<Row> expanded = hashtags.withColumn("hashtag", explode(hashtags.col("hashtags"))).drop(hashtags.col("hashtags"));
         Dataset<Row> result = expanded.groupBy("hashtag").agg(count("*").as("NumberOfHashtags")).cache();
-        
         result = result.orderBy(result.col("NumberOfHashtags").desc()).cache();
         result.show(10);
         
+        // Save results
         String resultFilename = String.format("%04d", year) + "-" + String.format("%02d", month) + "-" + String.format("%02d", day) + "-" + String.format("%02d", hour);
-        result.limit(10).write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets-" + resultFilename + ".csv");
+        result.limit(10).write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets-" + resultFilename + ".csv");*/
     }
     
     public static String[] GetStringArray(ArrayList<String> arr) 
@@ -76,5 +92,25 @@ public class App
             str[j] = arr.get(j); 
         } 
         return str; 
-    } 
+    }
+    
+    public static void DeleteOlderResults(long timestamp) throws UnknownHostException {
+        
+        // Create a connection to ES cluster
+        Settings settings = Settings.builder()
+                .put("cluster.name", ElasticSearch.CLUSTER_NAME)
+                .put("client.transport.sniff", "true").build();
+        
+        TransportClient client = new PreBuiltTransportClient(settings)
+                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST1), ElasticSearch.PORT))
+                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST2), ElasticSearch.PORT))
+                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST3), ElasticSearch.PORT));
+        
+        BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
+                .filter(QueryBuilders.rangeQuery("timestamp").lt(timestamp))
+                .source("tweets-management")
+                .get();
+        long deleted = response.getDeleted();   
+        
+    }
 }
