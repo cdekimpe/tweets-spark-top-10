@@ -4,6 +4,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.Calendar;
 import java.util.ArrayList;
 import me.dekimpe.config.ElasticSearch;
 import org.apache.hadoop.conf.Configuration;
@@ -47,11 +48,13 @@ public class App
         String directory = "/topics/tweet/year=" + String.format("%04d", year) + "/month=" + String.format("%02d", month) + "/day=" + String.format("%02d", day) + "/hour=" + String.format("%02d", hour) + "/";
         
         // Get timestamp to get the data to delete from ElasticSearch
-        Date date = new Date(year, month, day, hour, 0); // month representation 0 to 11 & get next hour.
-        long timestamp = date.getTime(); // milliseconds -> seconds
-        System.out.println(date);
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, month - 1);
+        cal.set(Calendar.DAY_OF_MONTH, day);
+        cal.set(Calendar.HOUR_OF_DAY, hour);
+        long timestamp = cal.getTimeInMillis() / 1000l;
         System.out.println(timestamp);
-        System.out.println(timestamp / 1000l);
         
         /* Get list of files from that period
         ArrayList<String> files = new ArrayList<>();
