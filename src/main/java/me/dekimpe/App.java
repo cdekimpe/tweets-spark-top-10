@@ -47,17 +47,6 @@ public class App
         int hour = Integer.parseInt(args[3]);
         String directory = "/topics/tweet/year=" + String.format("%04d", year) + "/month=" + String.format("%02d", month) + "/day=" + String.format("%02d", day) + "/hour=" + String.format("%02d", hour) + "/";
         
-        // Get timestamp to get the data to delete from ElasticSearch
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.YEAR, year);
-        cal.set(Calendar.MONTH, month - 1);
-        cal.set(Calendar.DAY_OF_MONTH, day);
-        cal.set(Calendar.HOUR_OF_DAY, hour + 1);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        long timestamp = cal.getTimeInMillis() / 1000l;
-        
         // Get list of files from that period
         ArrayList<String> files = new ArrayList<>();
         try {
@@ -87,9 +76,22 @@ public class App
         result = result.orderBy(result.col("NumberOfHashtags").desc()).cache();
         result.show(10);
         
+        // Get timestamp to get the data to delete from ElasticSearch
+        Calendar cal = Calendar.getInstance();
+        cal.set(Calendar.YEAR, year);
+        cal.set(Calendar.MONTH, month - 1);
+        cal.set(Calendar.DAY_OF_MONTH, day);
+        cal.set(Calendar.HOUR_OF_DAY, hour);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        long from = cal.getTimeInMillis() / 1000l;
+        cal.set(Calendar.HOUR_OF_DAY, hour + 1);
+        long to = cal.getTimeInMillis() / 1000l;
+        
         // Delete previous results stored in ElasticSearch from SpeedLayer
         try {
-            deleteOlderResults(timestamp);
+            deleteOlderResults(from, to);
         } catch (UnknownHostException e) {
             System.err.println(e);
         }
@@ -108,7 +110,7 @@ public class App
         return str; 
     }
     
-    public static void deleteOlderResults(long timestamp) throws UnknownHostException {
+    public static void deleteOlderResults(long from, long to) throws UnknownHostException {
         
         // Create a connection to ES cluster
         System.setProperty("es.set.netty.runtime.available.processors", "false");
@@ -122,7 +124,7 @@ public class App
                 .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST3), ElasticSearch.PORT));
         
         BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
-                .filter(QueryBuilders.rangeQuery("timestamp").lt(timestamp))
+                .filter(QueryBuilders.rangeQuery("timestamp").lt(to).gte(from))
                 .source("tweets-management")
                 .get();
         long deleted = response.getDeleted();
