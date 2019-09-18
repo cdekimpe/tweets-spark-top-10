@@ -84,6 +84,13 @@ public class App
         result = result.orderBy(result.col("NumberOfHashtags").desc()).cache();
         result.show(10);
         
+        // Delete previous results stored in ElasticSearch from SpeedLayer
+        try {
+            deleteOlderResults(timestamp);
+        } catch (UnknownHostException e) {
+            System.err.println(e);
+        }
+        
         // Save results
         String resultFilename = String.format("%04d", year) + "-" + String.format("%02d", month) + "-" + String.format("%02d", day) + "-" + String.format("%02d", hour);
         result.limit(10).write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets-" + resultFilename + ".csv");
@@ -98,7 +105,7 @@ public class App
         return str; 
     }
     
-    public static void DeleteOlderResults(long timestamp) throws UnknownHostException {
+    public static void deleteOlderResults(long timestamp) throws UnknownHostException {
         
         // Create a connection to ES cluster
         Settings settings = Settings.builder()
