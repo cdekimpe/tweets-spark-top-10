@@ -47,7 +47,7 @@ public class App
         String directory = "/topics/tweet/year=" + String.format("%04d", year) + "/month=" + String.format("%02d", month) + "/day=" + String.format("%02d", day) + "/hour=" + String.format("%02d", hour) + "/";
         
         // Get timestamp to get the data to delete from ElasticSearch
-        Date date = new Date(year, month - 1, day, hour + 1, 0); // month representation 0 to 11 & get next hour.
+        Date date = new Date(year, month, day, hour, 0); // month representation 0 to 11 & get next hour.
         long timestamp = date.getTime(); // milliseconds -> seconds
         System.out.println(date);
         System.out.println(timestamp);
@@ -109,7 +109,7 @@ public class App
                 .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST3), ElasticSearch.PORT));
         
         BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
-                .filter(QueryBuilders.rangeQuery("timestamp").lt(timestamp))
+                .filter(QueryBuilders.rangeQuery("timestam"p).lt(timestamp))
                 .source("tweets-management")
                 .get();
         long deleted = response.getDeleted();   
