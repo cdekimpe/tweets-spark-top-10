@@ -56,6 +56,8 @@ public class App
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
         long timestamp = cal.getTimeInMillis() / 1000l;
+        System.out.println(cal);
+        System.out.println(timestamp);
         
         /* Get list of files from that period
         ArrayList<String> files = new ArrayList<>();
