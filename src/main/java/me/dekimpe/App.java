@@ -121,7 +121,8 @@ public class App
                 .filter(QueryBuilders.rangeQuery("timestam").lt(timestamp))
                 .source("tweets-management")
                 .get();
-        long deleted = response.getDeleted();   
+        long deleted = response.getDeleted();
+        System.out.println(deleted);
         
     }
 }
