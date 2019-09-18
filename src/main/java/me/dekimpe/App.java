@@ -49,6 +49,7 @@ public class App
         // Get timestamp to get the data to delete from ElasticSearch
         Date date = new Date(year, month - 1, day, hour + 1, 0); // month representation 0 to 11 & get next hour.
         long timestamp = date.getTime(); // milliseconds -> seconds
+        System.out.println(date);
         System.out.println(timestamp);
         System.out.println(timestamp / 1000l);
         
