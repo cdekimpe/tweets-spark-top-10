@@ -5,7 +5,6 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Calendar;
 import java.util.ArrayList;
-import java.util.Date;
 import me.dekimpe.config.ElasticSearch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -54,6 +53,7 @@ public class App
             FileSystem fs = FileSystem.get(new URI(hdfsHost), conf);
             FileStatus[] fileStatus = fs.listStatus(new Path(hdfsHost + directory));
             for (FileStatus status : fileStatus) {
+                System.out.println(status.getPath().toString());
                 files.add(status.getPath().toString());
             }
         } catch (Exception e) {
@@ -76,7 +76,7 @@ public class App
         result = result.orderBy(result.col("NumberOfHashtags").desc()).cache();
         result.show(10);
         
-        // Get timestamp to get the data to delete from ElasticSearch
+        // Get timestamps to get the data to delete from ElasticSearch
         Calendar cal = Calendar.getInstance();
         cal.set(Calendar.YEAR, year);
         cal.set(Calendar.MONTH, month - 1);
@@ -111,7 +111,6 @@ public class App
     }
     
     public static void deleteOlderResults(long from, long to) throws UnknownHostException {
-        
         // Create a connection to ES cluster
         System.setProperty("es.set.netty.runtime.available.processors", "false");
         Settings settings = Settings.builder()
@@ -129,6 +128,5 @@ public class App
                 .get();
         long deleted = response.getDeleted();
         System.out.println("ElasticSearch Delete By Query : #" + deleted + " entries deleted.");
-        
     }
 }
