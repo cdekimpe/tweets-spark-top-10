@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Calendar;
 import java.util.ArrayList;
+import java.util.Date;
 import me.dekimpe.config.ElasticSearch;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -56,8 +57,9 @@ public class App
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
         long timestamp = cal.getTimeInMillis() / 1000l;
-        System.out.println(cal);
-        System.out.println(timestamp);
+        Date date = cal.getTime();
+        System.out.println(date);
+        System.out.println(date.getTime());
         
         /* Get list of files from that period
         ArrayList<String> files = new ArrayList<>();
