@@ -51,10 +51,13 @@ public class App
         cal.set(Calendar.YEAR, year);
         cal.set(Calendar.MONTH, month - 1);
         cal.set(Calendar.DAY_OF_MONTH, day);
-        cal.set(Calendar.HOUR_OF_DAY, hour);
+        cal.set(Calendar.HOUR_OF_DAY, hour + 1);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         long timestamp = cal.getTimeInMillis() / 1000l;
         
-        // Get list of files from that period
+        /* Get list of files from that period
         ArrayList<String> files = new ArrayList<>();
         try {
             Configuration conf = new Configuration();
@@ -92,7 +95,7 @@ public class App
         
         // Save results
         String resultFilename = String.format("%04d", year) + "-" + String.format("%02d", month) + "-" + String.format("%02d", day) + "-" + String.format("%02d", hour);
-        result.limit(10).write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets-" + resultFilename + ".csv");
+        result.limit(10).write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets-" + resultFilename + ".csv");*/
     }
     
     public static String[] GetStringArray(ArrayList<String> arr) 
