@@ -109,7 +109,7 @@ public class App
                 .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST3), ElasticSearch.PORT));
         
         BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
-                .filter(QueryBuilders.rangeQuery("timestam"p).lt(timestamp))
+                .filter(QueryBuilders.rangeQuery("timestam").lt(timestamp))
                 .source("tweets-management")
                 .get();
         long deleted = response.getDeleted();   
