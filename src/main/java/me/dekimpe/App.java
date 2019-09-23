@@ -3,6 +3,10 @@ package me.dekimpe;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Calendar;
 import java.util.ArrayList;
 import me.dekimpe.config.ElasticSearch;
@@ -36,15 +40,29 @@ public class App
         final String hdfsHost = "hdfs://hdfs-namenode:9000";
         
         // Arguments Management
-        if (args.length < 4) {
+        int year = 0, month = 0, day = 0, hour = 0;
+        Calendar cal = Calendar.getInstance();
+        if (args.length == 0) {
+            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC).minusHours(2);
+            year = now.getYear();
+            month = now.getMonthValue();
+            day = now.getDayOfMonth();
+            hour = now.getHour();
+        } else if (args.length < 4) {
+            year = Integer.parseInt(args[0]);
+            month = Integer.parseInt(args[1]);
+            day = Integer.parseInt(args[2]);
+            hour = Integer.parseInt(args[3]);
+        } else {
             System.err.println("Number of arguments is not correct.");
             System.exit(1);
         }
-        int year = Integer.parseInt(args[0]);
-        int month = Integer.parseInt(args[1]);
-        int day = Integer.parseInt(args[2]);
-        int hour = Integer.parseInt(args[3]);
-        String directory = "/topics/tweet/year=" + String.format("%04d", year) + "/month=" + String.format("%02d", month) + "/day=" + String.format("%02d", day) + "/hour=" + String.format("%02d", hour) + "/";
+        
+        // Get Directory to get Avro Files from
+        String directory = "/topics/tweet/year=" + String.format("%04d", year) +
+                "/month=" + String.format("%02d", month) +
+                "/day=" + String.format("%02d", day) +
+                "/hour=" + String.format("%02d", hour) + "/";
         
         // Get list of files from that period
         ArrayList<String> files = new ArrayList<>();
@@ -68,7 +86,7 @@ public class App
         }
         
         SparkSession spark = SparkSession.builder()
-                .appName("Spark Parsing XML - Session")
+                .appName("Spark Top 10 Tweets")
                 .master("spark://192.168.10.14:7077")
                 .config("spark.executor.memory", "1g")
                 .getOrCreate();
@@ -84,18 +102,16 @@ public class App
         result.show(10);
         
         // Get timestamps to get the data to delete from ElasticSearch
-        Calendar cal = Calendar.getInstance();
         cal.set(Calendar.YEAR, year);
-        cal.set(Calendar.MONTH, month - 1);
+        cal.set(Calendar.MONTH, month);
         cal.set(Calendar.DAY_OF_MONTH, day);
         cal.set(Calendar.HOUR_OF_DAY, hour);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
         long from = cal.getTimeInMillis() / 1000l;
-        cal.set(Calendar.HOUR_OF_DAY, hour + 1);
-        long to = cal.getTimeInMillis() / 1000l;
-        
+        cal.add(Calendar.HOUR, 1);
+        long to = cal.getTimeInMillis() / 1000l;        
         // Delete previous results stored in ElasticSearch from SpeedLayer
         try {
             deleteOlderResults(from, to);
