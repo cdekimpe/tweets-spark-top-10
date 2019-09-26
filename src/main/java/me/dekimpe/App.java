@@ -48,7 +48,7 @@ public class App
             month = now.getMonthValue();
             day = now.getDayOfMonth();
             hour = now.getHour();
-        } else if (args.length < 4) {
+        } else if (args.length == 4) {
             year = Integer.parseInt(args[0]);
             month = Integer.parseInt(args[1]);
             day = Integer.parseInt(args[2]);
