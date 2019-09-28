@@ -113,6 +113,7 @@ public class App
         cal.add(Calendar.HOUR, 1);
         long to = cal.getTimeInMillis() / 1000l;      
         System.out.println("from: " + from + " - to: " + to);
+        System.exit(0);
         // Delete previous results stored in ElasticSearch from SpeedLayer
         try {
             deleteOlderResults(from, to);
