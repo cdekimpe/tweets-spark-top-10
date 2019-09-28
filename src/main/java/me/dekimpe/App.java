@@ -111,7 +111,8 @@ public class App
         cal.set(Calendar.MILLISECOND, 0);
         long from = cal.getTimeInMillis() / 1000l;
         cal.add(Calendar.HOUR, 1);
-        long to = cal.getTimeInMillis() / 1000l;        
+        long to = cal.getTimeInMillis() / 1000l;      
+        System.out.println("from: " + from + " - to: " + to);
         // Delete previous results stored in ElasticSearch from SpeedLayer
         try {
             deleteOlderResults(from, to);
@@ -121,7 +122,7 @@ public class App
         
         // Save results
         String resultFilename = String.format("%04d", year) + "-" + String.format("%02d", month) + "-" + String.format("%02d", day) + "-" + String.format("%02d", hour);
-        result.limit(10).write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets-" + resultFilename + ".csv");
+        result.limit(10).write().mode(SaveMode.Overwrite).format("csv").option("header", "true").save("hdfs://hdfs-namenode:9000/output/Top10-Tweets/" + resultFilename + ".csv");
     }
     
     public static String[] GetStringArray(ArrayList<String> arr) 
