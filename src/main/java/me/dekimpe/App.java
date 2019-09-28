@@ -43,7 +43,7 @@ public class App
         int year = 0, month = 0, day = 0, hour = 0;
         Calendar cal = Calendar.getInstance();
         if (args.length == 0) {
-            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC).minusHours(2);
+            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC).minusHours(1);
             year = now.getYear();
             month = now.getMonthValue();
             day = now.getDayOfMonth();
@@ -112,8 +112,6 @@ public class App
         long from = cal.getTimeInMillis() / 1000l;
         cal.add(Calendar.HOUR, 1);
         long to = cal.getTimeInMillis() / 1000l;      
-        System.out.println("from: " + from + " - to: " + to);
-        System.exit(0);
         // Delete previous results stored in ElasticSearch from SpeedLayer
         try {
             deleteOlderResults(from, to);
