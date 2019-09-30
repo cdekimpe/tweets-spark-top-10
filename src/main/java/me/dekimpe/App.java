@@ -14,15 +14,18 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.spark.api.java.function.VoidFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import static org.apache.spark.sql.functions.count;
 import static org.apache.spark.sql.functions.explode;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.transport.InetSocketTransportAddress;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.reindex.BulkByScrollResponse;
 import org.elasticsearch.index.reindex.DeleteByQueryAction;
@@ -59,7 +62,7 @@ public class App
         }
         
         // Get Directory to get Avro Files from
-        String directory = "/topics/tweet/year=" + String.format("%04d", year) +
+        String directory = "/topics/tweets/year=" + String.format("%04d", year) +
                 "/month=" + String.format("%02d", month) +
                 "/day=" + String.format("%02d", day) +
                 "/hour=" + String.format("%02d", hour) + "/";
@@ -112,9 +115,20 @@ public class App
         long from = cal.getTimeInMillis() / 1000l;
         cal.add(Calendar.HOUR, 1);
         long to = cal.getTimeInMillis() / 1000l;      
+        
         // Delete previous results stored in ElasticSearch from SpeedLayer
+        // Create a connection to ES cluster
         try {
-            deleteOlderResults(from, to);
+            System.setProperty("es.set.netty.runtime.available.processors", "false");
+            Settings settings = Settings.builder()
+                    .put("cluster.name", ElasticSearch.CLUSTER_NAME)
+                    .put("client.transport.sniff", "true").build();
+            TransportClient client = new PreBuiltTransportClient(settings)
+                    .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST1), ElasticSearch.PORT))
+                    .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST2), ElasticSearch.PORT))
+                    .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST3), ElasticSearch.PORT));
+            deleteOlderResults(client, from, to);
+            //saveNewResults(client, result);
         } catch (UnknownHostException e) {
             System.err.println(e);
         }
@@ -133,23 +147,36 @@ public class App
         return str; 
     }
     
-    public static void deleteOlderResults(long from, long to) throws UnknownHostException {
-        // Create a connection to ES cluster
-        System.setProperty("es.set.netty.runtime.available.processors", "false");
-        Settings settings = Settings.builder()
-                .put("cluster.name", ElasticSearch.CLUSTER_NAME)
-                .put("client.transport.sniff", "true").build();
-        
-        TransportClient client = new PreBuiltTransportClient(settings)
-                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST1), ElasticSearch.PORT))
-                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST2), ElasticSearch.PORT))
-                .addTransportAddress(new InetSocketTransportAddress(InetAddress.getByName(ElasticSearch.HOST3), ElasticSearch.PORT));
+    public static void deleteOlderResults(TransportClient client, long from, long to) throws UnknownHostException {
         
         BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
                 .filter(QueryBuilders.rangeQuery("timestamp").lt(to).gte(from))
                 .source("tweets-management")
                 .get();
+        
+        // Debugging
         long deleted = response.getDeleted();
         System.out.println("ElasticSearch Delete By Query : #" + deleted + " entries deleted.");
     }
+    
+    /*public static void saveNewResults(TransportClient client, Dataset<Row> results) {
+        BulkRequestBuilder bulkRequest = client.prepareBulk();
+        results.toJavaRDD().foreach((new VoidFunction<Row>() {
+            public void call(Row r) throws Exception {
+                //json = "{\"timestamp\": " + r.get
+                bulkRequest.add(client.prepareIndex(ElasticSearch.INDEX, "hashtags")
+                    .setSource(json, XContentType.JSON));
+            }
+        }));
+        /*
+        results.foreach(row -> bulkRequest.add(client.prepareIndex(ElasticSearch.INDEX, "results").setSource(json, XContentType.JSON)));
+        for (Tuple input : window.get()) {
+            Tweet tweet = (Tweet) input.getValueByField("tweet");
+            for (String hashtag : tweet.getHashtags()) {
+                json = "{\"timestamp\": " + tweet.getTimestamp() + ", \"hashtag\": \"" + hashtag + "\"}";
+                bulkRequest.add(client.prepareIndex(ElasticSearch.INDEX, "hashtags")
+                    .setSource(json, XContentType.JSON));
+            }
+        }
+    }*/
 }
