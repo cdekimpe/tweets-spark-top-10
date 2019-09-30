@@ -150,7 +150,7 @@ public class App
     public static void deleteOlderResults(TransportClient client, long from, long to) throws UnknownHostException {
         
         BulkByScrollResponse response = DeleteByQueryAction.INSTANCE.newRequestBuilder(client)
-                .filter(QueryBuilders.termQuery("_type", "hashtags"))
+                //.filter(QueryBuilders.termQuery("_type", "hashtags"))
                 .filter(QueryBuilders.rangeQuery("timestamp").lt(to).gte(from))
                 .source("tweets-management")
                 .get();
